@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Digital Product Unlocks Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Manrope:wght@400;600&family=Cairo:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: centered vertical tree that mirrors the course whiteboard; branches sit side by side and stack on phones. */
+:root{--bg:#F6F5FB;--card:#FFFFFF;--ink:#1B1740;--mute:#5E5A80;--line:#7C4DDB;--hl:#E8F55B;--yes:#1E9E57;--no:#D63A3A;--bd:#DEDAF0;
+--disp:"Bricolage Grotesque",system-ui,sans-serif;--body:"Manrope","Cairo",system-ui,sans-serif;--ar:"Cairo","Manrope",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#12102B;--card:#1C1A3D;--ink:#EEEBFF;--mute:#A9A5CF;--line:#9C7BF0;--hl:#D8E84A;--bd:#332F63;--yes:#3CCB7F;--no:#F0605F}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#12102B;--card:#1C1A3D;--ink:#EEEBFF;--mute:#A9A5CF;--line:#9C7BF0;--hl:#D8E84A;--bd:#332F63;--yes:#3CCB7F;--no:#F0605F}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.5;text-align:center}
+header{padding:28px 16px 12px}
+h1{font-family:var(--disp);font-size:clamp(26px,5vw,40px);margin:0 0 6px;text-wrap:balance}
+.sub{color:var(--mute);margin:0 auto;max-width:60ch}
+.ar{font-family:var(--ar);direction:rtl;color:var(--mute);display:block}
+nav{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:12px 16px;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--bd)}
+nav button,.ctl button{font:600 14px var(--body);color:var(--ink);background:var(--card);border:1px solid var(--bd);border-radius:999px;padding:8px 14px;cursor:pointer}
+nav button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+nav button:focus-visible,.ctl button:focus-visible,summary:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--line);outline-offset:2px}
+.ctl{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:14px 16px}
+.ctl input{font:400 15px var(--body);padding:8px 14px;border-radius:999px;border:1px solid var(--bd);background:var(--card);color:var(--ink);min-width:200px}
+main{max-width:1180px;margin:0 auto;padding:8px 16px 60px}
+details.sec{background:var(--card);border:1px solid var(--bd);border-radius:16px;margin:14px 0;padding:0 12px}
+details.sec>summary{cursor:pointer;list-style:none;padding:18px 8px;font-family:var(--disp);font-size:22px}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary small{display:block;font:600 12px var(--body);color:var(--line);letter-spacing:.06em;text-transform:uppercase}
+.tree{padding:6px 0 26px;overflow-x:auto}
+.node{display:flex;flex-direction:column;align-items:center}
+.txt{max-width:44ch;padding:2px 8px}
+.txt .en{display:block;font-weight:600}
+.link{width:2px;height:22px;background:var(--line)}
+.node.h>.txt .en{font-family:var(--disp);font-size:19px}
+.node.hl>.txt .en{background:var(--hl);color:#1B1740;padding:3px 10px;border-radius:6px;display:inline-block}
+.node.ex>.txt{border:1px dashed var(--line);border-radius:12px;padding:10px 14px;background:var(--bg)}
+.node.yes>.txt .en::before{content:"✔ ";color:var(--yes)}
+.node.no>.txt .en::before{content:"✘ ";color:var(--no)}
+.node.note>.txt{border-inline-start:4px solid var(--hl);background:var(--bg);border-radius:8px;padding:8px 12px;font-size:14px}
+.branch{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 18px;border-top:2px solid var(--line);padding-top:0;margin-top:0;width:100%}
+.branch>.col{display:flex;flex-direction:column;align-items:center;flex:1 1 230px;max-width:360px;position:relative}
+.branch>.col::before{content:"";width:2px;height:20px;background:var(--line);display:block}
+.hit{outline:3px solid var(--hl);border-radius:8px}
+.tool{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:20px;margin:14px auto;max-width:760px}
+.tool label{display:block;font-weight:600;margin:14px 0 4px}
+.tool input[type=text]{width:100%;font:400 16px var(--body);padding:10px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--ink);text-align:center}
+.out{font-family:var(--disp);font-size:20px;margin:18px 0;padding:14px;border-radius:12px;background:var(--hl);color:#1B1740;text-wrap:balance}
+.checks{display:grid;gap:8px;text-align:start;margin-top:10px}
+.checks label{display:flex;gap:10px;align-items:flex-start;font-weight:400;margin:0;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg)}
+.score{font-family:var(--disp);font-size:28px;margin-top:10px}
+.empty{padding:50px 16px;color:var(--mute)}
+@media (prefers-reduced-motion:no-preference){details.sec{transition:border-color .2s}details.sec[open]{border-color:var(--line)}}
+</style>
+</head>
+<body>
+<header>
+<h1>Digital Product Unlocks Map</h1>
+<p class="sub">Reference tree from the course sessions: Session 2 (the 5 Unlocks) and Session 3 (value, examples, formats, Whop).</p>
+<span class="ar">خريطة مرجعية لخطوات بناء المنتج الرقمي بنفس ترتيب المحاضرات</span>
+</header>
+<nav id="nav" role="tablist" aria-label="Sessions"></nav>
+<div class="ctl" id="ctl">
+<input id="q" type="search" placeholder="Search / بحث" aria-label="Search">
+<button id="openAll" type="button">Expand all</button>
+<button id="closeAll" type="button">Collapse all</button>
+</div>
+<main id="main"></main>
+
+<script>
+/* ===== DATA: each node = {en, ar, k?: kind, c?: [children]} kinds: h heading, hl highlight, ex example, yes, no, note ===== */
+const N=(en,ar,k,c)=>({en,ar,k,c});
+
+const SESSION2 = [
+{id:"formats",label:"Formats",ar:"أشكال المنتج",tree:
+N("Digital products exist in many formats","المنتجات الرقمية موجودة بأشكال كتير","h",[
+ N("eBooks","كتب إلكترونية","h",[
+  N("A written guide that teaches people how to do something.","دليل مكتوب بيعلّم الناس يعملوا حاجة.",null,[
+   N("Example: a faceless eBook that guides players how to farm more gold in a game (World of Warcraft).","مثال: كتاب بدون وش بيعلّم اللاعبين يجمعوا ذهب أكتر في لعبة.","ex")])]),
+ N("Digital Assets","ملفات رقمية جاهزة","h",[
+  N("Ready-made files people use in their own life or work: templates, planners, design packs.","ملفات جاهزة بيستخدموها في حياتهم أو شغلهم: قوالب ومخططات وحزم تصميم.",null,[
+   N("They save people time.","بتوفّر على الناس الوقت.",null,[
+    N("Example: a budget tracker generating about $7,000/month. Why? It saves people money. The lecturer did not know who created it.","مثال: جدول ميزانية بيجيب حوالي 7000 دولار في الشهر. ليه؟ لأنه بيوفّر فلوس. ومعروفش مين عامله.","ex")])])]),
+ N("Pre-Recorded Programs","برامج فيديو مسجلة","h",[
+  N("Video lessons people watch at their own pace.","دروس فيديو بيشوفوها بسرعتهم.",null,[
+   N("Useful when someone needs to see something done instead of reading about it.","مفيدة لما الشخص يحتاج يشوف الحاجة بتتعمل مش يقراها بس.",null,[
+    N("Example: \"Pencil Drawing Made Easy\", a video program that teaches beginners to draw realistic images.","مثال: برنامج رسم بالقلم الرصاص للمبتدئين.","ex",[
+     N("Is it valuable to you if you do not like drawing?","هل له قيمة عندك لو مش بتحب الرسم؟",null,[
+      N("No. It is valuable only to the right person.","لأ. قيمته للشخص المناسب بس.","no")])])])])]),
+ N("Digital Minds","عقول رقمية","h",[
+  N("The newest format. Example from the course: \"AskIman\", Iman's digital mind you can ask.","أحدث شكل. مثال من الكورس: AskIman وهو عقل رقمي تسأله.",null,[
+   N("The slide is cut off here. It says access lasts for as long as you stay a member, and that you must first understand what makes a product valuable.","الصورة مقطوعة هنا. بتقول إن الوصول مستمر طول ما انت مشترك، وإنك لازم الأول تفهم إيه اللي بيخلي المنتج له قيمة.","note")])])
+])},
+
+{id:"intro",label:"The 5 Unlocks",ar:"الـ 5 مفاتيح",tree:
+N("There are 5 Digital Product Unlocks that determine the value of a digital product","في 5 مفاتيح بتحدد قيمة المنتج الرقمي","h",[
+ N("The eBook with fewer pages made more sales because of one unlock. The slide shows the number 4; Unlock 5 (Speed) revisits the same example.","الكتاب الأقل صفحات باع أكتر بسبب مفتاح معين. الشريحة بتعرض رقم 4، والمفتاح 5 (السرعة) بيرجع لنفس المثال.","note"),
+ N("Value is what matters, not length.","القيمة هي المهمة مش الطول.","hl")])},
+
+{id:"u1",label:"Unlock 1 · Pain",ar:"المفتاح 1: الألم",tree:
+N("Unlock 1: Pain. Identifying a problem","المفتاح 1: الألم. تحديد المشكلة","h",[
+ N("Most people ask: \"What should my digital product be about?\"","أغلب الناس بيسألوا: المنتج بتاعي يكون عن إيه؟",null,[
+  N("They think they need a brilliant, original idea (the telephone inventor story).","فاكرين إنهم محتاجين فكرة عبقرية ومبتكرة.",null,[
+   N("That is often the wrong approach. You do not need to reinvent the wheel. You need one useful idea.","ده غالباً الطريقة الغلط. مش محتاج تخترع العجلة. محتاج فكرة واحدة مفيدة.","hl",[
+    N("Types of problems: there are 2","أنواع المشاكل: اثنين","h",[
+     N("Pleasure","متعة","h",[
+      N("Everyone wants nice things.","كل الناس عايزة حاجات حلوة.",null,[
+       N("If you never owned a PS5, would it make a real difference to your life?","لو عمرك ما اشتريت بلايستيشن 5، هل ده هيفرق في حياتك فعلاً؟")])]),
+     N("Pain","ألم","h",[
+      N("Something that hurts right now, every day.","حاجة بتوجع دلوقتي كل يوم.",null,[
+       N("Humans have a greater drive to run away from pain than to run toward pleasure.","الإنسان دافعه إنه يهرب من الألم أقوى من إنه يجري ورا المتعة.","hl",[
+        N("Painful problems show up in 3 pillars of life","المشاكل المؤلمة بتظهر في 3 أعمدة في الحياة","h",[
+         N("Wealth","المال","h"),N("Health","الصحة","h"),N("Relationships","العلاقات","h")]),
+        N("Problems in these pillars are hard to ignore, so a solution becomes exponentially more desirable.","المشاكل في الأعمدة دي صعب تتجاهلها، فالحل بيبقى مرغوب أكتر بكتير.")])])])
+    ])])])]),
+ N("Health example: how often does the problem remind you?","مثال صحة: كام مرة المشكلة بتفكّرك بنفسها؟","h",[
+  N("Whiter teeth: you notice it once or twice a week.","تبييض الأسنان: بتلاحظه مرة أو اتنين في الأسبوع.","ex"),
+  N("Toothache: you are reminded every time you eat, talk, and try to sleep.","ألم الضرس: بيفكّرك كل ما تاكل وتتكلم وتحاول تنام.","ex",[
+   N("The more often a problem reminds someone, the more painful it is. They are reminded more often that it needs fixing.","كل ما المشكلة تفكّر صاحبها أكتر، كل ما كانت أوجع، وبيتفكر أكتر إنها لازم تتصلّح.","hl")])])
+])},
+
+{id:"u2",label:"Unlock 2 · Worsening Pain",ar:"المفتاح 2: الألم المتفاقم",tree:
+N("Unlock 2: Worsening Pain. There are 2 levels of pain","المفتاح 2: الألم المتفاقم. في مستويين للألم","h",[
+ N("Consistent Pain","ألم ثابت","h",[
+  N("It stays at the same level. Annoying but bearable.","بيفضل في نفس المستوى. مزعج بس محتمل."),
+  N("People learn to live with it and say they will deal with it later.","الناس بتتعايش معاه وبتقول هنتصرف بعدين."),
+  N("Like wanting whiter teeth. The pain does not get worse.","زي الرغبة في أسنان أبيض. الألم مش بيزيد.","ex")]),
+ N("Worsening Pain","ألم متفاقم","h",[
+  N("It gets worse over time. Every day it hurts a little more than the day before.","بيزيد مع الوقت. كل يوم بيوجع أكتر من اللي قبله."),
+  N("Stage 1: Sensitive. A little sensitive with something cold. You tell yourself you will sort it out eventually.","مرحلة 1: حساسية. حساس شوية مع البارد. بتقول لنفسك هتتصرف في الآخر.","ex"),
+  N("Stage 2: Dull ache. A week later it is there most of the day.","مرحلة 2: وجع خفيف. بعد أسبوع بيبقى موجود أغلب اليوم.","ex"),
+  N("Stage 3: Throbbing. A few days later you cannot eat properly or sleep. It is all you think about.","مرحلة 3: نبض شديد. بعد كام يوم مش بتاكل ولا بتنام وكل تفكيرك فيه.","ex",[
+   N("Are you looking for the cheapest dentist? No. You call every dentist until one can see you today. That is urgency.","هتدور على أرخص دكتور؟ لأ. هتكلم كل الدكاترة لحد ما واحد يكشف عليك النهارده. ده اسمه إلحاح.","hl")])]),
+ N("Consistent problems: people look for solutions here and there. Worsening problems: people actively look for solutions.","المشاكل الثابتة: الناس بتدور على حلول بشكل متقطع. المتفاقمة: بتدور بنشاط.","h",[
+  N("Also check how quickly the pain worsens. The faster it worsens, the more urgency to fix it.","وبرضه شوف سرعة التفاقم. كل ما أسرع، الإلحاح أكبر."),
+  N("Which is more urgent? A chip in your windscreen, or a faulty car battery?","أيهم أكتر إلحاحاً؟ شرخ صغير في الزجاج الأمامي ولا بطارية عربية بايظة؟","h",[
+   N("Windscreen chip: still worsens the longer you leave it, but slowly.","شرخ الزجاج: بيزيد مع الوقت بس ببطء.","no"),
+   N("Faulty battery: worsens much faster, and you cannot go anywhere. Build your product around this one.","البطارية: بتسوء أسرع بكتير ومش هتقدر تتحرك. ابني منتجك حواليها.","yes")]),
+  N("A solution to a painful problem that quickly worsens makes your product more valuable.","حل لمشكلة مؤلمة بتزيد بسرعة بيخلي منتجك أغلى قيمة.","hl",[
+   N("Valuable to people means they are willing to pay, so you can make a lot of money.","القيمة عند الناس معناها إنهم مستعدين يدفعوا، فتقدر تكسب كتير.")])])
+])},
+
+{id:"u3",label:"Unlock 3 · Transformation",ar:"المفتاح 3: التحوّل",tree:
+N("Unlock 3: Transformation. Point A to Point B","المفتاح 3: التحوّل. من النقطة A للنقطة B","h",[
+ N("The problem you solve should ideally be Painful and Worsening.","المشكلة اللي بتحلها المفروض تكون مؤلمة ومتفاقمة.","hl"),
+ N("You also need the ideal end result for the person","ومحتاج كمان تعرف النتيجة المثالية للشخص","h",[
+  N("Point A: where they are now","النقطة A: هما فين دلوقتي","h",[
+   N("Point A includes 4 things","النقطة A فيها 4 حاجات",null,[
+    N("How someone feels","إحساسه"),N("What they fear","إيه اللي بيخاف منه"),N("What they avoid","إيه اللي بيتجنبه"),N("How they see themselves","نظرته لنفسه")]),
+   N("Football example: worried they will have to give up football, sitting out games, starting to think their playing days are over.","مثال كورة: خايف يسيب الكورة، بدأ يقعد برا المباريات، وبيفكر إن أيام لعبه خلصت.","ex")]),
+  N("Point B: where they want to be","النقطة B: عايزين يوصلوا فين","h",[
+   N("Football example: they play a full match without pain, they are back in the team, they see themselves as a player again.","مثال كورة: يلعب ماتش كامل من غير وجع، يرجع للفريق، ويشوف نفسه لاعب تاني.","ex")])]),
+ N("When A and B are mapped, you know the transformation your product must provide.","لما ترسم A و B تعرف التحوّل اللي المنتج لازم يقدمه.","hl",[
+  N("Why a product when free videos exist?","طب ليه منتج لو في فيديوهات مجانية؟","h",[
+   N("People would have to find the right videos, work out which apply to them, and piece it together themselves.","هيضطروا يلاقوا الفيديوهات الصح ويفهموا إيه ينطبق عليهم ويجمعوها بنفسهم."),
+   N("A digital product has the information already synthesised and packaged. A to B without trial and error or searching.","المنتج الرقمي المعلومات فيه متجمعة ومرتبة. من A لـ B من غير تجربة وخطأ وبحث.","hl")]),
+  N("Weight loss example: lose 10 kg. Which would you rather have?","مثال خسارة وزن: عايز تخسّ 10 كيلو. تفضّل إيه؟","ex",[
+   N("A stack of books: weeks of research, days building plans, a month of trial and error in the gym.","كومة كتب: أسابيع بحث، أيام لبناء الخطط، وشهر تجربة وخطأ في الجيم.","no"),
+   N("A done-for-you 4-week guide with the right foods and meal plans packaged.","دليل جاهز لـ 4 أسابيع بالأكل والخطط الصح متنظمة.","yes")])]),
+ N("Specialised AI tools now do the heavy lifting","في أدوات ذكاء اصطناعي متخصصة بتعمل الشغل التقيل","h",[
+  N("They find painful problems that worsen, and rank them for you.","بتدوّر على مشاكل مؤلمة متفاقمة وبترتبهم."),
+  N("They map out the entire transformation (stages, goal, description).","بترسم التحوّل كله (مراحل، هدف، وصف)."),
+  N("They build the digital product, without you needing knowledge, experience or skills.","وبتبني المنتج من غير ما تحتاج معرفة أو خبرة أو مهارات."),
+  N("Example transformation map: Recognize the diet-to-maintenance shift, define what satisfying means, build a flexible meal structure.","مثال خريطة تحوّل: افهم الانتقال من الدايت للحفاظ على الوزن، حدد يعني إيه شبع، وابني هيكل وجبات مرن.","ex")])
+])},
+
+{id:"u4",label:"Unlock 4 · Specificity",ar:"المفتاح 4: التحديد",tree:
+N("Unlock 4: Specificity","المفتاح 4: التحديد","h",[
+ N("If you can be specific about who the product is for, it becomes more valuable.","لو حددت بالظبط المنتج لمين، قيمته بتزيد.","hl",[
+  N("Broad → Narrower → Specific","واسع ← أضيق ← محدد","h",[
+   N("Broad: Parents. A very broad group.","واسع: الآباء. مجموعة كبيرة جداً."),
+   N("Narrower: Dads. Slightly more specific, still very broad.","أضيق: الأباء الرجال. أدق شوية بس لسه واسع."),
+   N("Specific: Divorced dads with teenage sons.","محدد: آباء مطلقين عندهم أبناء مراهقين.","hl",[
+    N("You are talking to one person about one problem they are already trying to fix. They think: \"They are talking to me.\"","بتكلم شخص واحد عن مشكلة واحدة بيحاول يحلها. هيقول: ده بيكلمني أنا.")])])]),
+ N("Balance: specific enough that the right person feels seen, common enough that plenty of people have the problem.","التوازن: محدد كفاية إن الشخص يحس إنك شايفه، وشائع كفاية إن ناس كتير عندهم المشكلة.","hl",[
+  N("If only a handful of people in the world have this exact problem, it is too narrow.","لو عدد قليل جداً في العالم عندهم المشكلة دي بالظبط، يبقى ضيق زيادة.","no")]),
+ N("Examples: specific or not?","أمثلة: محدد ولا لأ؟","h",[
+  N("\"New moms building repeatable newborn bedtimes without rigid schedules\". Very specific: first-time postpartum moms moving toward bedtime without delaying feeds.","\"أمهات جداد بيبنوا روتين نوم للمولود من غير جداول صارمة\". محدد جداً.","yes"),
+  N("\"Dual working parents cooking complete dinners without evening chopping\". Very specific: not just parents, but dual working parents who want to prepare meals faster.","\"آباء الاتنين شغالين بيطبخوا عشا كامل من غير تقطيع بالليل\". محدد جداً.","yes"),
+  N("\"Busy moms: drop pounds fast with daily 30-minute fat-burning routines\" ($21 eBook). Not specific: most moms are busy, so it competes with every weight-loss product for moms.","\"أمهات مشغولات: خسّي بسرعة بتمارين 30 دقيقة\". مش محدد: أغلب الأمهات مشغولات فبينافس كل منتجات التخسيس.","no")]),
+ N("Broad is not always bad: big corporations need hundreds of thousands or millions of people. You only need a few buyers to start making money.","الواسع مش دايماً وحش: الشركات الكبيرة محتاجة مئات الآلاف. انت محتاج كام مشتري بس تبدأ تكسب.","note",[
+  N("The more specific, the more the buyer recognises themselves, the more valuable the solution feels, and the easier the purchase decision.","كل ما كان أدق، المشتري بيشوف نفسه أكتر، فالحل بيبقى أغلى وقرار الشراء أسهل.","hl")])
+])},
+
+{id:"u5",label:"Unlock 5 · Speed",ar:"المفتاح 5: السرعة",tree:
+N("Unlock 5: Speed","المفتاح 5: السرعة","h",[
+ N("Two eBooks, same price and cover. One gets your result in 20 pages, the other in 200. Which do you buy?","كتابين بنفس السعر والغلاف. واحد يوصّلك في 20 صفحة والتاني في 200. تشتري أنهي؟","ex",[
+  N("The 20-page one. When someone buys a digital product, they are buying a result (A to B).","اللي 20 صفحة. اللي بيشتري منتج رقمي بيشتري نتيجة (من A لـ B).","hl")]),
+ N("Speed to Result matters for 2 reasons","السرعة للنتيجة مهمة لسببين","h",[
+  N("Reason 1: Doubt. People question whether it will get them the result. Seeing a result reassures them.","السبب 1: الشك. الناس بتشك إنه هيوصّلها. لما تشوف نتيجة بتطمّن."),
+  N("Reason 2: Logic. Before buying they ask how long until they see a result. The shorter the time, the easier the decision.","السبب 2: المنطق. قبل الشراء بيسألوا هياخد قد إيه. كل ما أقصر، القرار أسهل.")]),
+ N("But faster is not always better","بس الأسرع مش دايماً أحسن","h",[
+  N("If a problem can be solved in 5 minutes, people generally will not pay for it.","لو المشكلة بتتحل في 5 دقايق الناس عادة مش هتدفع.","no"),
+  N("If the promised timeline is unrealistic, people do not trust the product.","لو المدة اللي بتوعد بيها غير واقعية، مش هيثقوا.","no")]),
+ N("Ask: how quickly could someone realistically start seeing a result? Then find a smaller first win they can reach sooner.","اسأل: إمتى واقعياً ممكن يبدأ يشوف نتيجة؟ وبعدين دوّر على أول انتصار صغير يوصله أسرع.","hl",[
+  N("A quicker first win builds trust, and trust makes the product more valuable and more money.","أول انتصار سريع بيبني ثقة، والثقة بتزود قيمة المنتج والفلوس.")])
+])},
+
+{id:"promise",label:"Product Promise",ar:"وعد المنتج",tree:
+N("Putting it all together: recap of the 5 Unlocks","تجميع كل حاجة: ملخص الـ 5 مفاتيح","h",[
+ N("The 5 Unlocks in one line each","المفاتيح الخمسة في سطر لكل واحد","h",[
+  N("1 Pain: solves a painful problem, not a nice-to-have.","1 الألم: بيحل مشكلة مؤلمة مش رفاهية."),
+  N("2 Worsening Pain: the pain is getting worse over time.","2 الألم المتفاقم: الألم بيزيد مع الوقت."),
+  N("3 Transformation: takes someone from Point A to Point B.","3 التحوّل: بياخد الشخص من A لـ B."),
+  N("4 Specificity: made for one specific person.","4 التحديد: معمول لشخص واحد محدد."),
+  N("5 Speed: gets them to the result quickly (slide cut off, meaning from Unlock 5).","5 السرعة: بيوصّله للنتيجة بسرعة (الشريحة مقطوعة، المعنى من المفتاح 5).")]),
+ N("The Product Promise: one sentence with 4 parts","وعد المنتج: جملة واحدة من 4 أجزاء","h",[
+  N("1 Who = Specificity","1 مين = التحديد"),
+  N("2 The Problem = Pain + Worsening Pain","2 المشكلة = الألم + الألم المتفاقم"),
+  N("3 The Result = Transformation","3 النتيجة = التحوّل"),
+  N("4 The Time = Speed","4 الوقت = السرعة")]),
+ N("I help [who], with [a problem that's getting worse], get to [Point B] in [how long].","أنا بساعد [مين] اللي عندهم [مشكلة بتزيد] يوصلوا لـ [النقطة B] في [قد إيه].","hl",[
+  N("Example: I help first-time parents of 4 to 6-month-olds, whose nights get harder every week, get their baby sleeping through the night in 7 nights.","مثال: بساعد الآباء لأول مرة اللي عندهم أطفال 4 لـ 6 شهور، ولياليهم بتصعب كل أسبوع، يخلّوا الطفل ينام طول الليل في 7 ليالي.","ex")])
+])}
+];
+
+const SESSION3 = [
+{id:"s3recap",label:"Recap: Problem → Fix",ar:"مراجعة: المشكلة ثم الحل",tree:
+N("Recap: the 5 Unlocks as listed at the start of Session 3","مراجعة المفاتيح الخمسة كما ظهرت في أول المحاضرة 3","h",[
+ N("Order shown here: 1 Transformation, 2 Pain, 3 Worsening Pain, 4 Specificity, 5 Speed. Session 2 listed Pain first. Same five ideas, different numbering.","الترتيب هنا: 1 التحوّل، 2 الألم، 3 الألم المتفاقم، 4 التحديد، 5 السرعة. في المحاضرة 2 الألم كان الأول. نفس الأفكار بترقيم مختلف.","note"),
+ N("A digital product takes someone from Point A (where they are now with a problem) to Point B (where the problem is fixed).","المنتج الرقمي بياخد الشخص من A (عنده مشكلة) إلى B (المشكلة اتحلت).","hl",[
+  N("Point A → Point B examples","أمثلة A و B","h",[
+   N("A: \"I can't fall asleep.\"  B: \"I sleep through the night.\"","A: مش بعرف أنام.  B: بنام طول الليل.","ex"),
+   N("A: \"I've never cooked anything.\"  B: \"I can cook 5 meals for the week.\"","A: عمري ما طبخت.  B: بقدر أطبخ 5 وجبات للأسبوع.","ex"),
+   N("A: \"Spreadsheets scare me.\"  B: \"I built my budget in an afternoon.\"","A: الجداول بتخوّفني.  B: عملت ميزانيتي في عصرية.","ex")])]),
+ N("A buyer only cares about 2 things: The Problem → The Fix","المشتري بيهتم بحاجتين بس: المشكلة ← الحل","hl",[
+  N("A digital product fixes a real problem.","المنتج الرقمي بيحل مشكلة حقيقية.","h",[
+   N("Story: you just got engaged, excitement lasts about a week, then quotes arrive for the venue, dress, photographer and food, and you have no idea where the money is going.","قصة: اتخطبت، الحماس بيدوم أسبوع، وبعدين عروض الأسعار بتيجي للقاعة والفستان والمصور والأكل ومش عارف الفلوس رايحة فين.","ex",[
+    N("Product: \"Ultimate Wedding Planner\", Google Sheets, instant download, 9 tabs.","المنتج: مخطط زفاف جاهز على Google Sheets، تحميل فوري، 9 تبويبات.","ex",[
+     N("You search, see free budget templates, and click the first one that looks like it will keep you on track. You do not think about who made it, what they look like, or how many followers they have.","بتدور وتشوف قوالب ميزانية مجانية وتضغط على أول واحد شكله هيمشّيك صح. مش بتفكر مين عمله ولا شكله ولا كام متابع.","hl",[
+      N("When planning a wedding, you do not care who made the budget planner, as long as it stops you going over budget.","وانت بتجهز لفرح مش فارق معاك مين عمل المخطط طالما بيمنعك تتخطى الميزانية.","hl")])])])])])
+])},
+
+{id:"s3value",label:"Intrinsic vs Borrowed Value",ar:"القيمة الذاتية والمستعارة",tree:
+N("What is at the core? Why you can do it without showing your face","إيه الأساس؟ وليه تقدر تنجح من غير ما تظهر وشك","h",[
+ N("Intrinsic value: the value something has in and of itself. It is not there because of who made it or who endorses it. It is there purely because of what the thing does.","القيمة الذاتية: القيمة اللي في الشيء نفسه. مش بسبب مين عمله ولا مين بيزكّيه، بس بسبب اللي بيعمله.","hl",[
+  N("Example: Google Maps. You never asked who drew the roads. You asked one thing: will this get me where I'm going? That is Point A to Point B in its purest form, and nobody cares whose face is behind it.","مثال: خرائط جوجل. عمرك ما سألت مين رسم الطرق. سألت سؤال واحد: هيوصلني ولا لأ؟ ده A لـ B في أنقى صورة ومحدش يهمه وش مين وراه.","ex")]),
+ N("Borrowed value: extra value borrowed from a person","القيمة المستعارة: قيمة زيادة مستعارة من شخص","h",[
+  N("Example: a signed Ronaldo jersey is the same fabric as the one on the rack but sells for far more, because the extra value is borrowed from the person who signed it.","مثال: تيشرت رونالدو الموقّع نفس القماش بس بيتباع بأكتر بكتير لأن القيمة الزيادة مستعارة من اللي وقّع.","ex"),
+  N("Some digital products work like this: when you buy from a world-renowned expert, part of what you pay for is them. It is real and it works, but it is the minority.","في منتجات رقمية شغالة كده: لما تشتري من خبير عالمي جزء من اللي بتدفعه فيه هو. حقيقي وبينفع بس ده الأقلية."),
+  N("The majority of the digital product market runs on intrinsic value.","أغلب سوق المنتجات الرقمية شغال على القيمة الذاتية.","hl"),
+  N("The course says the next main session shows how to use \"borrowed value\".","الكورس بيقول إن الجلسة الرئيسية الجاية هتوريك إزاي تستفيد من القيمة المستعارة.","note")])
+])},
+
+{id:"s3faceless",label:"Faceless examples",ar:"أمثلة منتجات بدون وش",tree:
+N("Examples of faceless digital products (figures are the course's claims, not verified by us)","أمثلة لمنتجات رقمية بدون وش (الأرقام من كلام الكورس ومش متحقق منها)","h",[
+ N("Avada: best-selling website template on ThemeForest","Avada: أكتر قالب موقع مبيعاً على ThemeForest","h",[
+  N("A ready-made website design. People buy it and swap in their own words and photos.","تصميم موقع جاهز. الناس بتشتريه وتحط كلامها وصورها."),
+  N("Number one seller on ThemeForest, well over 800,000 sales, over $60 million revenue.","الأول مبيعاً، أكتر من 800 ألف عملية بيع، وأكتر من 60 مليون دولار."),
+  N("Built by a two-person team. Buyers know the product by name and almost none know the people behind it.","اتعمل بفريق من شخصين. المشترين عارفين المنتج بالاسم وتقريباً محدش عارف الناس اللي وراه.","hl")]),
+ N("Visualize Value: a brand built on black-and-white graphics","Visualize Value: براند بُني على رسومات أبيض وأسود","h",[
+  N("Jack Butcher started posting one simple black-and-white graphic a day, each turning an idea into a picture.","جاك بوتشر بدأ ينشر رسمة بسيطة كل يوم، كل واحدة بتحوّل فكرة لصورة."),
+  N("People followed the graphics and the graphics became the brand. He turned the following into courses and a one-page planner.","الناس تابعت الرسومات والرسومات بقت البراند. حوّل المتابعين لكورسات ومخطط صفحة واحدة."),
+  N("January 2020: $58 in the business account. By the end of that year: over $1 million in sales, with no ad spend.","يناير 2020: 58 دولار في الحساب. آخر السنة: أكتر من مليون دولار مبيعات من غير إعلانات.","hl")])
+])},
+
+{id:"s3formats",label:"Packaging: the 4 formats",ar:"التغليف: الأشكال الأربعة",tree:
+N("How do you package it? Packaging = the format","إزاي تغلّفه؟ التغليف = الشكل","h",[
+ N("4 main formats: eBooks, Video Programs, Digital Assets, Digital Minds","4 أشكال رئيسية: كتب، برامج فيديو، ملفات رقمية، عقول رقمية","note"),
+ N("eBooks","كتب إلكترونية","h",[N("The eBooks panel was collapsed in the screenshots, so there is no content for it here.","لوحة الكتب كانت مقفولة في الصور فمفيش محتوى ليها هنا.","note")]),
+ N("Video Programs","برامج فيديو","h",[
+  N("Pre-recorded lessons watched step by step, in modules in a set order, each building on the last, taking someone from where they are to the result the creator teaches.","دروس مسجلة بيتشاف خطوة بخطوة، في وحدات بترتيب ثابت، كل وحدة تبني على اللي قبلها."),
+  N("Example: Josh Comeau, 2021, pre-sales of \"CSS for JavaScript Developers\".","مثال: جوش كومو، 2021، بيع مسبق لكورس CSS للمبرمجين.","ex",[
+   N("Price: about $120 per order. Result: nearly 4,800 orders and about $577,000 in one week, with the course only half finished.","السعر حوالي 120 دولار للطلب. النتيجة: قرب 4800 طلب وحوالي 577 ألف دولار في أسبوع والكورس نصه بس خلص.","ex",[
+    N("People bought it because CSS was driving them mad and his course fixed it.","الناس اشترته لأن CSS كان مجنّنهم وكورسه حلّه.","hl")])]),
+  N("How to do it faceless: 3 ways","إزاي تعمله بدون وش: 3 طرق","h",[
+   N("Loom: record your screen while you walk through the steps.","Loom: سجّل شاشتك وانت بتشرح الخطوات."),
+   N("Google Slides: talk over a set of slides.","Google Slides: اتكلم فوق شرائح."),
+   N("Higgsfield: use an AI tool to create a presenter for you.","Higgsfield: أداة ذكاء اصطناعي تعملك مقدم.")])]),
+ N("Digital Assets","ملفات رقمية جاهزة","h",[
+  N("Tools people use rather than read or watch: templates, planners, spreadsheets, prompt packs.","أدوات الناس بتستخدمها مش بتقراها أو تشوفها: قوالب، مخططات، جداول، حزم برومبتات."),
+  N("Example: Jason Chin built his brand on the name \"Easlo\" (from a name generator) and a cartoon avatar. His buyers wanted a budget tracker that works, so he built them on Notion.","مثال: جيسون تشين بنى براند باسم Easlo (من مولد أسماء) وصورة كرتونية. المشترين عايزين متتبع ميزانية فبناه على Notion.","ex",[
+   N("Price: $10 to $100 per template. Result: $239,000 in one year per Business Insider, and over $500,000 reported since.","السعر من 10 لـ 100 دولار للقالب. النتيجة: 239 ألف دولار في سنة حسب Business Insider، وأكتر من 500 ألف بعد كده.","ex")])]),
+ N("Digital Minds","عقول رقمية","h",[
+  N("The newest format, made possible by AI. An AI trained on a specific topic so people can ask it questions and get answers at any hour.","أحدث شكل وبفضل الذكاء الاصطناعي. AI متدرب على موضوع معين والناس بتسأله في أي وقت."),
+  N("Example: AskIman, \"a virtual Iman in your pocket\". Built on 10 years of his content, every program he made, 10 years of internal Zoom transcripts, and group and one-on-one coaching calls.","مثال: AskIman. مبني على 10 سنين من محتواه، كل برامجه، 10 سنين نصوص اجتماعات داخلية، ومكالمات تدريب جماعية وفردية.","ex")])
+])},
+
+{id:"s3whop",label:"Hosting & selling on Whop",ar:"الاستضافة والبيع على Whop",tree:
+N("The place the course recommends for hosting: Whop. What does Whop do for you?","المكان اللي الكورس بينصح تستضيف فيه: Whop. بيعمل إيه؟","h",[
+ N("Your store page","صفحة المتجر","h",[
+  N("Set up a product page in a few minutes. No website, no coding.","تجهز صفحة منتج في دقايق. من غير موقع ولا برمجة.")]),
+ N("Every format","كل الأشكال","h",[
+  N("Works for ebooks, video programs, digital minds and templates.","شغال للكتب وبرامج الفيديو والعقول الرقمية والقوالب."),
+  N("Also works for communities and memberships.","وكمان للمجتمعات والعضويات.")]),
+ N("Payments","المدفوعات","h",[
+  N("Buyers pay through Whop. Whop processes the payment and the money goes to your account.","المشتري بيدفع عن طريق Whop والفلوس بتروح حسابك."),
+  N("Charge once, or set up monthly or yearly subscriptions.","دفع مرة واحدة أو اشتراك شهري أو سنوي."),
+  N("Offer free trials, or let buyers split the price into instalments.","تجارب مجانية أو تقسيط السعر."),
+  N("Cards, buy now pay later, or crypto.","بطاقات، اشتري الآن وادفع لاحقاً، أو كريبتو."),
+  N("100+ payment methods across 195 countries, picking the right ones for each buyer.","أكتر من 100 طريقة دفع في 195 دولة وبيختار المناسب لكل مشتري.")])
+])}
+];
+
+/* ===== ADD NEW SESSIONS HERE: copy the SESSION2/SESSION3 pattern ===== */
+const SESSIONS=[
+ {id:"s2",label:"Session 2",ar:"المحاضرة 2",sections:SESSION2},
+ {id:"s3",label:"Session 3",ar:"المحاضرة 3",sections:SESSION3},
+ {id:"s4",label:"Session 4",ar:"المحاضرة 4",sections:[]}
+];
+
+/* ===== Renderer ===== */
+const $=s=>document.querySelector(s);
+const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+function render(n){
+ const el=document.createElement("div");el.className="node "+(n.k||"");
+ const t=document.createElement("div");t.className="txt";
+ t.innerHTML='<span class="en">'+esc(n.en)+'</span><span class="ar">'+esc(n.ar)+'</span>';
+ el.appendChild(t);
+ if(n.c&&n.c.length){
+  const l=document.createElement("div");l.className="link";el.appendChild(l);
+  if(n.c.length===1){el.appendChild(render(n.c[0]));}
+  else{const b=document.createElement("div");b.className="branch";
+   n.c.forEach(k=>{const col=document.createElement("div");col.className="col";col.appendChild(render(k));b.appendChild(col)});
+   el.appendChild(b);}
+ }
+ return el;
+}
+const tools={
+ builder:`<div class="tool"><h2 style="font-family:var(--disp);margin-top:0">Product Promise Builder<span class="ar">منشئ وعد المنتج</span></h2>
+ <label for="w">Who (specific person) / مين<span class="ar">الشخص المحدد</span></label><input id="w" type="text" value="first-time parents of 4 to 6-month-olds">
+ <label for="p">Problem that is getting worse / المشكلة المتفاقمة</label><input id="p" type="text" value="nights get harder every week">
+ <label for="b">Point B (result) / النتيجة</label><input id="b" type="text" value="their baby sleeping through the night">
+ <label for="t">How long / المدة</label><input id="t" type="text" value="7 nights">
+ <div class="out" id="out"></div></div>`,
+ check:`<div class="tool"><h2 style="font-family:var(--disp);margin-top:0">Product Checklist<span class="ar">قائمة فحص المنتج قبل البناء</span></h2>
+ <div class="checks" id="checks"></div><div class="score" id="score"></div></div>`
+};
+const CH=[
+ ["Pain: does it solve a painful problem (not a nice-to-have)?","هل بيحل مشكلة مؤلمة؟"],
+ ["Worsening: does the pain get worse over time, fast enough to create urgency?","هل الألم بيزيد بسرعة كفاية يخلق إلحاح؟"],
+ ["Transformation: are Point A (feel, fear, avoid, self-image) and Point B written down?","هل كتبت النقطة A والنقطة B؟"],
+ ["Specificity: one specific person, but common enough to have plenty of buyers?","هل المنتج لشخص محدد وفي نفس الوقت عدده كفاية؟"],
+ ["Speed: realistic time to a first win, not too slow and not unbelievable?","هل في أول انتصار سريع وواقعي؟"]
+];
+function mountTools(host,which){
+ host.innerHTML=tools[which];
+ if(which==="builder"){
+  const f=()=>{const v=id=>host.querySelector("#"+id).value.trim()||"[…]";
+   host.querySelector("#out").textContent="I help "+v("w")+", whose "+v("p")+", get "+v("b")+" in "+v("t")+"."};
+  host.querySelectorAll("input").forEach(i=>i.addEventListener("input",f));f();
+ }else{
+  const box=host.querySelector("#checks");
+  CH.forEach((c,i)=>{const l=document.createElement("label");
+   l.innerHTML='<input type="checkbox" id="c'+i+'"><span>'+esc(c[0])+'<span class="ar">'+esc(c[1])+'</span></span>';box.appendChild(l)});
+  const u=()=>{const n=host.querySelectorAll("input:checked").length;
+   host.querySelector("#score").textContent=n+" / 5"+(n===5?"  Ready to build":"")};
+  box.addEventListener("change",u);u();
+ }
+}
+let cur="s2";
+function show(id){
+ cur=id;
+ document.querySelectorAll("#nav button").forEach(b=>b.setAttribute("aria-selected",b.dataset.id===id));
+ const m=$("#main");m.innerHTML="";
+ $("#ctl").style.display=(id==="builder"||id==="check")?"none":"flex";
+ if(id==="builder"||id==="check"){mountTools(m,id);try{history.replaceState(null,"","#"+id)}catch(e){}return}
+ const S=SESSIONS.find(s=>s.id===id);
+ if(!S.sections.length){m.innerHTML='<div class="empty">This session is empty. Send its screenshots and it will be added here.<span class="ar">المحاضرة دي فاضية. ابعت صورها وهتتضاف هنا.</span></div>';return}
+ S.sections.forEach((s,i)=>{
+  const d=document.createElement("details");d.className="sec";d.id=s.id;d.open=(i===0);
+  const sm=document.createElement("summary");sm.innerHTML='<small>'+esc(S.label)+'</small>'+esc(s.label)+'<span class="ar">'+esc(s.ar)+'</span>';
+  const tr=document.createElement("div");tr.className="tree";tr.appendChild(render(s.tree));
+  d.appendChild(sm);d.appendChild(tr);m.appendChild(d);
+ });
+ try{history.replaceState(null,"","#"+id)}catch(e){}
+}
+const nav=$("#nav");
+[...SESSIONS.map(s=>({id:s.id,l:s.label+" · "+s.ar})),{id:"builder",l:"Promise Builder"},{id:"check",l:"Checklist"}].forEach(x=>{
+ const b=document.createElement("button");b.type="button";b.dataset.id=x.id;b.role="tab";b.textContent=x.l;b.onclick=()=>show(x.id);nav.appendChild(b)});
+$("#openAll").onclick=()=>document.querySelectorAll("details.sec").forEach(d=>d.open=true);
+$("#closeAll").onclick=()=>document.querySelectorAll("details.sec").forEach(d=>d.open=false);
+$("#q").addEventListener("input",e=>{
+ const q=e.target.value.trim().toLowerCase();
+ document.querySelectorAll(".hit").forEach(x=>x.classList.remove("hit"));
+ if(!q)return;let first=null;
+ document.querySelectorAll("details.sec").forEach(d=>{
+  let found=false;
+  d.querySelectorAll(".txt").forEach(t=>{if(t.textContent.toLowerCase().includes(q)){t.classList.add("hit");found=true;first=first||t}});
+  d.open=found;});
+ if(first)first.scrollIntoView({block:"center"});
+});
+const h=location.hash.slice(1);
+show(["s2","s3","s4","builder","check"].includes(h)?h:"s2");
+</script>
+</body>
+</html>
